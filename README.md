@@ -32,6 +32,12 @@ Players choose who moves first and (in AI mode) which side to play. Queens move 
 
 ## GitHub Pages
 
-Deploys automatically from `main` via GitHub Actions (`.github/workflows/deploy-pages.yml`).
+Deploys from `main` via GitHub Actions to the `gh-pages` branch.
 
-In the repo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+**One-time setup** (fixes deploy 404 if Pages was never enabled):
+
+1. Open [Settings → Pages](https://github.com/kyle-ip/all-queens-chess/settings/pages)
+2. Under **Build and deployment → Source**, choose **Deploy from a branch**
+3. Branch: **gh-pages** / **/(root)** → Save
+
+Site: https://kyle-ip.github.io/all-queens-chess/
