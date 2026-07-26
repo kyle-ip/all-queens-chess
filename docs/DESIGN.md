@@ -18,10 +18,11 @@
 
 | Layer        | Choice                            |
 |--------------|-----------------------------------|
-| Bundler      | Vite                              |
+| Bundler      | Vite (`base: '/all-queens-chess/'` for GitHub Pages) |
 | Language     | TypeScript                        |
 | Board / UI   | HTML + CSS + inline SVG queens    |
-| AI           | Heuristic / shallow threat search |
+| AI           | Easy / Normal / Hard              |
+| Deploy       | GitHub Actions → GitHub Pages     |
 
 ## Module map
 
