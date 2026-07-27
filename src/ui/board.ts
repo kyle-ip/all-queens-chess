@@ -144,7 +144,17 @@ export class BoardView {
           slot.className = `piece-slot piece ${piece.color}`;
         }
         slot.classList.toggle('is-selected', selected);
+        slot.classList.toggle('is-win', winSet.has(k));
       }
+    }
+  }
+
+  /** Clear selection / legal hints so human and AI flights look the same. */
+  clearMoveHints(): void {
+    for (const cell of this.cells.values()) {
+      cell.classList.remove('is-selected', 'is-legal');
+      const slot = cell.querySelector('.piece-slot');
+      slot?.classList.remove('is-selected');
     }
   }
 
@@ -159,6 +169,12 @@ export class BoardView {
     if (!fromCell || !toCell) return;
 
     this.animating = true;
+    this.clearMoveHints();
+
+    const fromSlot = fromCell.querySelector('.piece-slot') as HTMLElement;
+    const toSlot = toCell.querySelector('.piece-slot') as HTMLElement;
+
+    // Measure after clearing selection scale so flight size matches the settled piece.
     const fromRect = fromCell.getBoundingClientRect();
     const toRect = toCell.getBoundingClientRect();
 
@@ -169,25 +185,42 @@ export class BoardView {
     flyer.style.height = `${fromRect.height * 0.9}px`;
     flyer.style.left = `${fromRect.left + fromRect.width * 0.11}px`;
     flyer.style.top = `${fromRect.top + fromRect.height * 0.04}px`;
+    flyer.style.transform = 'translate(0, 0) scale(1)';
+    flyer.style.transition = 'none';
     document.body.appendChild(flyer);
 
-    const fromSlot = fromCell.querySelector('.piece-slot') as HTMLElement;
-    fromSlot.style.opacity = '0';
+    fromSlot.style.visibility = 'hidden';
 
-    await new Promise((r) => requestAnimationFrame(() => r(null)));
+    // Force style flush + double rAF so the CSS transition always starts from rest
+    // (single rAF often skips the transition when the board is otherwise idle — common on AI turns).
+    void flyer.offsetWidth;
+    await new Promise<void>((r) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => r())),
+    );
+
+    flyer.style.transition =
+      'transform 320ms cubic-bezier(.22,.9,.28,1), filter 320ms ease';
     flyer.style.transform = `translate(${toRect.left - fromRect.left}px, ${
       toRect.top - fromRect.top
     }px) scale(1.05)`;
-    flyer.style.transition =
-      'transform 320ms cubic-bezier(.22,.9,.28,1), filter 320ms ease';
     flyer.style.filter = 'drop-shadow(0 10px 12px rgba(40,20,10,.35))';
 
     await new Promise((r) => setTimeout(r, 330));
     flyer.remove();
-    fromSlot.style.opacity = '';
+
+    // Hand off to destination before paint so the piece never flashes back at origin.
+    fromSlot.innerHTML = '';
+    fromSlot.className = 'piece-slot';
     fromSlot.removeAttribute('data-id');
+    fromSlot.style.visibility = '';
+    fromCell.classList.remove('has-piece');
+
+    toSlot.setAttribute('data-id', pieceId);
+    toSlot.className = `piece-slot piece ${color}`;
+    toSlot.innerHTML = QUEEN_SVG;
+    toCell.classList.add('has-piece');
+
     this.animating = false;
-    void pieceId;
   }
 
   get isBusy(): boolean {

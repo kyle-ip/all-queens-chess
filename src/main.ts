@@ -90,6 +90,20 @@ function paint(): void {
   else stopClock();
 }
 
+async function playAnimatedMove(
+  from: { row: number; col: number },
+  to: { row: number; col: number },
+  color: 'red' | 'black',
+  pieceId: string,
+  apply: () => void,
+): Promise<void> {
+  inputLocked = true;
+  await board.animateMove(from, to, color, pieceId);
+  apply();
+  inputLocked = false;
+  paint();
+}
+
 async function runAiMove(): Promise<void> {
   if (!game.isAiTurn() || board.isBusy || inputLocked) return;
   const snap = game.snapshot();
@@ -98,11 +112,9 @@ async function runAiMove(): Promise<void> {
   const moving = pieceAt(snap.pieces, move.from.row, move.from.col);
   if (!moving) return;
 
-  inputLocked = true;
-  await board.animateMove(move.from, move.to, moving.color, moving.id);
-  game.applyAiMove(move);
-  inputLocked = false;
-  paint();
+  await playAnimatedMove(move.from, move.to, moving.color, moving.id, () => {
+    game.applyAiMove(move);
+  });
 }
 
 async function handleCellClick(row: number, col: number): Promise<void> {
@@ -119,11 +131,15 @@ async function handleCellClick(row: number, col: number): Promise<void> {
   ) {
     const moving = pieceAt(state.pieces, selected.row, selected.col);
     if (!moving) return;
-    inputLocked = true;
-    await board.animateMove(selected, { row, col }, moving.color, moving.id);
-    game.applyMove({ from: selected, to: { row, col } });
-    inputLocked = false;
-    paint();
+    await playAnimatedMove(
+      selected,
+      { row, col },
+      moving.color,
+      moving.id,
+      () => {
+        game.applyMove({ from: selected, to: { row, col } });
+      },
+    );
     scheduleAi();
     return;
   }

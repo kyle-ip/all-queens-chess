@@ -210,15 +210,31 @@ export class GameState {
   }
 
   undo(): boolean {
-    const prev = this.history.pop();
-    if (!prev) return false;
+    if (this.history.length === 0) return false;
 
-    this.pieces = prev.pieces.map((p) => ({ ...p }));
-    this.turn = prev.turn;
-    this.phase = prev.phase;
-    this.winner = prev.winner;
-    this.winLine = prev.winLine?.map((c) => ({ ...c })) ?? null;
-    this.moveCount = prev.moveCount;
+    const restore = (prev: HistoryEntry): void => {
+      this.pieces = prev.pieces.map((p) => ({ ...p }));
+      this.turn = prev.turn;
+      this.phase = prev.phase;
+      this.winner = prev.winner;
+      this.winLine = prev.winLine?.map((c) => ({ ...c })) ?? null;
+      this.moveCount = prev.moveCount;
+    };
+
+    restore(this.history.pop()!);
+
+    // vs AI: undo a full ply (AI reply + your move) so it's your turn again.
+    // Local hotseat stays single-step.
+    if (this.mode === 'ai') {
+      while (
+        this.history.length > 0 &&
+        this.phase === 'playing' &&
+        this.turn !== this.humanColor
+      ) {
+        restore(this.history.pop()!);
+      }
+    }
+
     this.selected = null;
     this.finishedAt = null;
     if (this.phase === 'playing' && this.startedAt === null) {

@@ -252,9 +252,6 @@ export class Hud {
     const turnClass =
       state.phase === 'won' ? state.winner ?? state.turn : state.turn;
 
-    const winColor =
-      state.winner === 'red' ? t('colorRed') : t('colorBlack');
-
     const undoDisabled = !state.canUndo ? 'disabled' : '';
 
     this.root.innerHTML = `
@@ -263,7 +260,7 @@ export class Hud {
           <strong class="brand-title">${t('brandTitle')}</strong>
         </div>
         <div class="status">
-          <span class="turn ${turnClass}">${turnLabel}</span>
+          <span class="turn ${turnClass}${state.phase === 'won' ? ' is-victory' : ''}">${turnLabel}</span>
           <span class="mode-tag">${modeLabel}</span>
           <span class="stats-tag">
             <span id="elapsed">${formatElapsed(state.elapsedMs)}</span>
@@ -283,8 +280,7 @@ export class Hud {
       ${
         state.phase === 'won'
           ? `<div class="win-banner fade-in">
-              <h2>${t('winTitle', { color: winColor })}</h2>
-              <p>${t('winSubtitle')}</p>
+              <h2>${turnLabel}</h2>
               <button type="button" class="cta" id="again-btn">${t('playAgain')}</button>
             </div>`
           : ''
